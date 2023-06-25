@@ -31,9 +31,10 @@ function cors(req, res, next) {
 // app.use(cors())
 app.use(cors)
 
-async function addPhoto(userLogin, photobase64) {
+async function addPhoto(userLogin, photobase64, day) {
     const date = new Date()
-    const date1 = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 4)
+    const dayOrWeek = date == 'thirdDay' ? 3 : 31
+    const date1 = new Date(date.getFullYear(), date.getMonth(), date.getDate() + dayOrWeek)
     await User.updateOne({ login: userLogin },
         {
             $push: {
@@ -85,27 +86,34 @@ app.post('/getphoto', async (req, res) => {
     }
     res.json({
         user: 'gone',
-        photos: user.photos
+        photos: user.photos,
+        login: user.login,
+        password: user.password
     })
 })
 
 app.post('/addphoto', async (req, res) => {
     req.isAdded = false
-    const { login, photobase64 } = req.body
+    const { login, photobase64, day, password } = req.body
+    console.log(day)
     const user = await User.findOne({ login: login })
     if (!user) {
         res.json({ isAdded: req.isAdded })
         return
     }
+    else if (password != user.password) {
+        res.json({ isAdded: req.isAdded })
+        return
+    }
 
     req.isAdded = true
-    addPhoto(login, photobase64)
+    addPhoto(login, photobase64, day)
     res.json({ isAdded: req.isAdded })
 })
 
 app.post('/adminpanel', async (req, res) => {
     const users = await User.find()
-    const { login, password } = req.body
+    const { login, password, isCheck } = req.body
     if (login != admin.login) {
         res.json({
             admin: 'null'
@@ -115,6 +123,14 @@ app.post('/adminpanel', async (req, res) => {
     else if (password != admin.password) {
         res.json({
             admin: 'wrong password'
+        })
+        return
+    }
+    if (isCheck) {
+        res.json({
+            admin: 'gone',
+            login: admin.login,
+            password: admin.password
         })
         return
     }
