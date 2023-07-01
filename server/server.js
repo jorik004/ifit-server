@@ -13,7 +13,7 @@ mongoose.connect('mongodb://127.0.0.1:27017/users')
 function cors(req, res, next) {
 
     // Website you wish to allow to connect
-    res.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:8080');
+    res.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:5500');
 
     // Request methods you wish to allow
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
@@ -72,6 +72,23 @@ setInterval(() => {
 app.get('/', async (req, res) => {
     res.send('Deleting')
 })
+app.post('/getlogin', async (req, res) => {
+    const { login, password } = req.body
+    const user = await User.findOne({ login: login }, { photos: 0 })
+    if (!user) {
+        res.json({ user: 'null' })
+        return
+    }
+    else if (user.password != password) {
+        res.json({ user: 'wrong password' })
+        return
+    }
+    res.json({
+        user: 'gone',
+        login: user.login,
+        password: user.password
+    })
+})
 
 app.post('/getphoto', async (req, res) => {
     const { login, password } = req.body
@@ -86,9 +103,7 @@ app.post('/getphoto', async (req, res) => {
     }
     res.json({
         user: 'gone',
-        photos: user.photos,
-        login: user.login,
-        password: user.password
+        photos: user.photos
     })
 })
 
